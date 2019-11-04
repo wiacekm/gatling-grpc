@@ -27,6 +27,10 @@ object TestServer {
         ChatMessage(username = username, data = s"Server says: Hello ${request.name}!")
       })
 
+      override def emptyGreet(request: com.github.phisgr.example.greet.EmptyRequest) = Future.fromTry(Try {
+        ChatMessage(username = "anonymous", data = s"Server says: Hello Anonymous!")
+      })
+
       override def register(request: RegisterRequest) = Future.fromTry(Try {
         val token = new Random().alphanumeric.take(10).mkString
         val success = accounts.putIfAbsent(request.username, token).isEmpty

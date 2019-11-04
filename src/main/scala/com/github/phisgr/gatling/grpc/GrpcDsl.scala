@@ -22,24 +22,25 @@ trait GrpcDsl {
   class Call private[gatling](requestName: Expression[String]) {
     def service[Service <: AbstractStub[Service]](stub: Channel => Service) = new CallWithService(requestName, stub)
 
-    def rpc[Req, Res](method: MethodDescriptor[Req, Res]) = {
+    def rpc[Req >: Null, Res](method: MethodDescriptor[Req, Res]) = {
       assert(method.getType == MethodDescriptor.MethodType.UNARY)
       new CallWithMethod(requestName, method)
     }
   }
 
-  class CallWithMethod[Req, Res] private[gatling](requestName: Expression[String], method: MethodDescriptor[Req, Res]) {
+  class CallWithMethod[Req >: Null, Res] private[gatling](requestName: Expression[String], method: MethodDescriptor[Req, Res]) {
     val f = { channel: Channel =>
       request: Req =>
         guavaFuture2ScalaFuture(ClientCalls.futureUnaryCall(channel.newCall(method, CallOptions.DEFAULT), request))
     }
 
-    def payload(req: Expression[Req]) = GrpcCallActionBuilder(requestName, f, req, headers = Nil)
+    def payload() = GrpcCallActionBuilder(requestName, f, None, headers = Nil)
+    def payload(req: Expression[Req]) = GrpcCallActionBuilder(requestName, f, Option(req), headers = Nil)
   }
 
   class CallWithService[Service <: AbstractStub[Service]] private[gatling](requestName: Expression[String], stub: Channel => Service) {
-    def rpc[Req, Res](fun: Service => Req => Future[Res])(request: Expression[Req]) =
-      GrpcCallActionBuilder(requestName, stub andThen fun, request, headers = Nil)
+    def rpc[Req >: Null, Res](fun: Service => Req => Future[Res])(request: Expression[Req]) =
+      GrpcCallActionBuilder(requestName, stub andThen fun, Option(request), headers = Nil)
   }
 
   def $[T: ClassTag : NotNothing](name: String): Expression[T] = s => s.attributes.get(name) match {

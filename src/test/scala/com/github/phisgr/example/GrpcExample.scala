@@ -6,7 +6,7 @@ import com.github.phisgr.gatling.grpc.Predef._
 import com.github.phisgr.gatling.pb._
 import com.github.phisgr.gatling.util._
 // stringToExpression is hidden because we have $ in GrpcDsl
-import io.gatling.core.Predef.{stringToExpression => _, _}
+import io.gatling.core.Predef._
 import io.gatling.core.session.Expression
 import io.grpc.{ManagedChannelBuilder, Status}
 
@@ -56,6 +56,19 @@ class GrpcExample extends Simulation {
           // so .extract and .extractMultiple are added to GrpcCallActionBuilder, see below
           extract { c: ChatMessage => c.username.some },
           extractMultiple { c: ChatMessage => c.data.split(' ').toSeq.some }.find(5)
+        )
+    )
+
+    .exec(
+      grpc("Empty Payload")
+        .rpc(GreetServiceGrpc.METHOD_EMPTY_GREET)
+        .payload()
+        .check(
+          // the extraction checks can be added inside .check
+          // but the extraction functions need type annotation
+          // so .extract and .extractMultiple are added to GrpcCallActionBuilder, see below
+          extract { c: ChatMessage => c.username.some }.is("anonomous"),
+          extractMultiple { c: ChatMessage => c.data.split(' ').toSeq.some }.find(3)
         )
     )
     .exec(

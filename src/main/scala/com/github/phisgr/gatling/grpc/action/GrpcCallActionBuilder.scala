@@ -13,10 +13,10 @@ import io.grpc.{Channel, Metadata}
 import scala.collection.breakOut
 import scala.concurrent.Future
 
-case class GrpcCallActionBuilder[Req, Res](
+case class GrpcCallActionBuilder[Req >: Null, Res](
   requestName: Expression[String],
   method: Channel => Req => Future[Res],
-  payload: Expression[Req],
+  payload: Option[Expression[Req]],
   headers: List[HeaderPair[_]] = Nil,
   checks: List[GrpcCheck[Res]] = Nil,
   protocolOverride: Option[GrpcProtocol] = None

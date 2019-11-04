@@ -17,7 +17,7 @@ import io.grpc.stub.MetadataUtils
 
 import scala.concurrent.ExecutionContext
 
-case class GrpcCallAction[Req, Res](
+case class GrpcCallAction[Req >: Null, Res](
   builder: GrpcCallActionBuilder[Req, Res],
   ctx: ScenarioContext,
   next: Action
@@ -79,8 +79,8 @@ case class GrpcCallAction[Req, Res](
           resolvedValue <- value(session)
         } yield (key, resolvedValue) :: l
       }
-      resolvedPayload <- builder.payload(session)
     } yield {
+      val resolvedPayload: Req = builder.payload.flatMap(_(session).toOption).orNull[Req]
       val rawChannel = component.getChannel(session)
       val channel = if (resolvedHeaders.isEmpty) rawChannel else {
         val headers = new Metadata()
